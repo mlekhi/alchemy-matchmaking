@@ -1,0 +1,22 @@
+venv
+__pycache__/
+
+graph/bundle.js
+**/bundle.js
+**/output.css
+
+
+# Ignore the data
+data.csv
+
+# Ignore the embeddings db
+chromadb
+
+# Ignore formatted
+graphData.json
+summarizedGraphData.json
+attendees.json
+.vercel
+
+.env
+.DS_Store
