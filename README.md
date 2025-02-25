@@ -12,11 +12,24 @@ This project is a tool for intelligently matching participants based on their re
 ## **Matching Algorithm**
 
 ### **1. Preprocessing Responses**
-- Convert text responses for "learning," "past work," "talk about forever," and "hype song" into **vector embeddings** using **SBERT**.
+- Convert text responses for **each individual question** ("learning," "past work," "talk about forever," and "hype song") into **vector embeddings** using **SBERT**.
 - Use **TF-IDF** as a fallback if embeddings are too sparse.
-- Store these embeddings in a **vector database** (e.g., **FAISS** for fast similarity lookups).
+- Store these embeddings in a **vector database** (e.g., **FAISS**) for fast similarity lookups.
 
-### **2. Compute Cross-Matching Scores**
+### **2. Individual Question Matching**
+Each response is evaluated independently to determine **direct similarity matching** within its category.
+
+#### **Matching by Individual Question:**
+✅ **Goal:** Allow similarity-based grouping based on individual responses while ensuring diversity where needed.
+#### **Algorithm:**
+- **“What do you want to learn?”** → Find others with highly similar learning interests.
+- **“What’s the last thing you worked on?”** → Ensure diverse past experiences to prevent clustering of similar backgrounds.
+- **“What’s something you could talk about forever?”** → Match users who share deep interests for knowledge-sharing.
+- **“What’s your hype song?”** → Prioritize music-based compatibility while allowing for variation in house assignments.
+
+### **3. Cross-Matching Responses**
+In addition to individual similarity scoring, two questions are cross-matched to enhance mentorship and knowledge-sharing dynamics.
+
 #### **Cross-Match #1: "What do you want to learn?" ⬄ "What can you talk about forever?"**
 ✅ **Goal:** Pair users who are passionate about a topic with those who want to learn it.
 #### **Algorithm:**
@@ -35,19 +48,10 @@ This project is a tool for intelligently matching participants based on their re
    - **Enforce diversity in work history** → **Avoid matching users with highly similar past projects**.
    - **Apply penalties** if too many users have the same work experience in a house.
 
-#### **Cross-Match #3: "What’s your hype song?"**
-✅ **Goal:** Balance **music-based cultural fit** with some diversity.
-#### **Algorithm:**
-1. **Convert songs to embeddings** using **pre-trained music models (e.g., Spotify API, OpenAI embeddings)**.
-2. **Compute similarity in genres, artists, and song embeddings**.
-3. **Use a hybrid similarity score:**
-   - **High music similarity** → Strengthen **1:1 matches**.
-   - **Low music similarity** → Encourage **house diversity** while still allowing compatibility.
-
-### **3. Final Matching & House Assignments**
+### **4. Final Matching & House Assignments**
 ✅ **Goal:** Ensure balance in **learning, experience, music preferences, and discussion variety**.
 #### **Algorithm:**
-1. **Calculate all match scores** based on learning/work/talk/music topics.
+1. **Calculate all match scores** based on individual question similarity and cross-match scores.
 2. **Sort by priority:**
    - **Mentorship pairs (learning ⬄ work experience with dissimilar past work)**.
    - **Knowledge-sharing pairs (learning ⬄ talk forever)**.
@@ -68,9 +72,8 @@ This project is a tool for intelligently matching participants based on their re
 
    | Names | Responses |
    |--------|--------------------------------|
-   | Freeman Jiang | I wish to explore the world |
-   | Rajan Agarwal | I want to build AGI |
-   | Hudhayfa Nazoordeen | I want to grow more vegetables hydroponically |
+   | Maya Lekhi | I wish to explore the world |
+   | Robin Hylands | I want to build AGI |
 
 3. Save the file as `data.csv` in the root directory.
 4. Set `COLUMN_INDEX` in `generate_embeddings.py` to the correct response column index (e.g., `1` in this case).
@@ -106,40 +109,6 @@ python attendees.py  # Rebuild attendee cache with summaries
 
 ---
 
-## **Developing the Graph Interface**
-1. Navigate to the `graph/` directory:
-```sh
-cd graph
-npm i
-npm run dev
-```
-2. Run Tailwind in a separate terminal:
-```sh
-npm run tailwind
-```
-3. Open `graph/index.html` in a browser to preview.
-4. To serve:
-```sh
-npm start
-```
-
----
-
-## **Developing the Matchmaking Interface**
-1. Navigate to the `match/` directory:
-```sh
-cd match
-npm i
-npm run dev
-```
-2. Open `localhost:3000` in a browser to view results.
-3. To serve:
-```sh
-npm start
-```
-
----
-
 ## **Deployment Guide**
 - Use **Vercel CLI** to deploy `match` and `graph` separately.
 - Keep sensitive CSV data private.
@@ -164,3 +133,6 @@ npm start
 - [ ] Optimize similarity thresholds for ideal matching.
 - [ ] Improve UI responsiveness.
 - [ ] Deploy to Vercel.
+
+---
+This document serves as a full project proposal with clear **setup instructions, technical methodology, individual question matching, cross-matching logic, and a structured to-do list** to guide implementation.
