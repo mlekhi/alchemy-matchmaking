@@ -23,6 +23,7 @@ pip install -r requirements.txt
 
 ### **3. Generate Embeddings and Match Data**
 ```sh
+python preprocess_alchemy_csv.py  # Cleaning the specific Alchemy luma responses. Skip this step or customize it for your individual event!
 python generate_embeddings.py  # Convert responses into vector embeddings
 python build_graph.py  # Construct graph based on similarity thresholds
 python attendees.py  # Generate attendee cache for search
