@@ -1,15 +1,13 @@
 import pandas as pd
 
-# Constants
 INPUT_CSV = "data.csv"
-OUTPUT_CSV = "cleaned_data.csv"
+OUTPUT_CSV = "csvs/cleaned_data.csv"
 
-# Load CSV
 df = pd.read_csv(INPUT_CSV)
 
-# Select relevant columns with cleaned names
 selected_columns = {
     "name": "Name",
+    "email": "Email",
     "what is something you’ve always wanted to learn about but haven’t started yet? (detail is highly encouraged!)": "Learning Interest",
     "what's the last thing you worked on that you're proud of? (detail is highly encouraged!)": "Past Work",
     "what's something you could talk about forever? (detail is highly encouraged!)": "Talk Forever",
@@ -17,10 +15,12 @@ selected_columns = {
 }
 df_cleaned = df[list(selected_columns.keys())].rename(columns=selected_columns)
 
-# Handle missing values (replace NaN with empty string or "NULL")
-df_cleaned = df_cleaned.fillna("NULL")
+df_cleaned = df_cleaned.drop_duplicates(subset=["Name"], keep="first")
 
-# Save cleaned CSV
+df_cleaned = df_cleaned.replace(["NULL", "null", "None", "none"], "").fillna("")
+
+non_matching_columns = ["Learning Interest", "Past Work", "Talk Forever", "Hype Song"]
+df_cleaned = df_cleaned[~(df_cleaned[non_matching_columns] == "").all(axis=1)]
+
+# save cleaned CSV
 df_cleaned.to_csv(OUTPUT_CSV, index=False)
-
-print(f"Cleaned CSV saved as {OUTPUT_CSV}")
