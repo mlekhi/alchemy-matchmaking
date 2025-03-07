@@ -8,6 +8,11 @@ graph/bundle.js
 
 # Ignore the data
 data.csv
+*.csv
+csvs/
+
+.env
+.env.local
 
 # Ignore the embeddings db
 chromadb
