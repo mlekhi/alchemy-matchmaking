@@ -1,5 +1,6 @@
 pandas
 numpy
-torch
-sentence_transformers
 chromadb
+dotenv
+cohere
+csv

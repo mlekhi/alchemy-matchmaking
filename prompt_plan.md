@@ -11,7 +11,7 @@
    - Export a cleaned dataset for downstream tasks.
 
 3. **Embedding Generation**
-   - Load a Sentence-BERT or similar embedding model.
+   - Load Cohere's english light model or similar embedding model.
    - Convert each participant's responses into vector embeddings.
    - Store the embeddings in a local vector database (ChromaDB).
 
@@ -55,7 +55,7 @@
    - Test it with sample data.
 
 4. **Embedding Generation**
-   - Implement a function to load a Sentence-BERT model.
+   - Implement a function to load Cohere's model.
    - Generate embeddings for each row in the cleaned dataset.
    - Store embeddings in ChromaDB.
 

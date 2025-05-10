@@ -1,43 +1,61 @@
-import pandas as pd
+import cohere
+import csv
 import numpy as np
-import torch
-from sentence_transformers import SentenceTransformer
 import chromadb
-import json
+import os
+from dotenv import load_dotenv
 
-# decide if you wanna use SBERT
-model = SentenceTransformer("all-MiniLM-L6-v2")
+# to generate embeddings, 1) initialize cohere client (and chroma), 2) read answers from csv,
+# 3) compute cosine similarity for each individual answer
 
-CSV_FILE = "data.csv"
-COLUMN_INDEX = 1  # Adjust based on the response column
-EMBEDDINGS_FILE = "embeddings.json"
-CHROMA_DB_DIR = "chroma_db"
+load_dotenv()
+COHERE_API_KEY= os.getenv("COHERE_API_KEY")
+co = cohere.Client(COHERE_API_KEY)
 
-df = pd.read_csv(CSV_FILE)
-responses = df.iloc[:, COLUMN_INDEX].dropna().tolist()
-names = df.iloc[:, 0].tolist()
+chroma_client = chromadb.PersistentClient(path="./chroma_db")  
+collection = chroma_client.get_or_create_collection(name="attendee_answer_embeddings")
 
-# Generate Embeddings
-print("Generating embeddings...")
-embeddings = model.encode(responses, convert_to_numpy=True)
+CSV_FILE = "cleaned_data.csv"
 
-# Normalize embeddings for similarity comparison
-embeddings = embeddings / np.linalg.norm(embeddings, axis=1, keepdims=True)
+# reading csv
+attendees = {}
+questions = []
+with open(CSV_FILE, newline='') as attendees_csv:
+    data = csv.reader(attendees_csv, delimiter=',', quotechar='"')
+    header = next(data)  
+    questions = header[1:] 
+    
+    for row in data:
+        name = row[0]  # name
+        # print(name)
+        answers = row[1:]  # question responses
+        attendees[name] = answers  # storing by name
 
-# ChromaDB Client
-chroma_client = chromadb.PersistentClient(path=CHROMA_DB_DIR)
-collection = chroma_client.get_or_create_collection(name="matchmaking")
+# print(attendees)
+# print(questions)
 
-for i, name in enumerate(names):
-    collection.add(
-        ids=[str(i)], 
-        embeddings=[embeddings[i].tolist()], 
-        metadatas=[{"name": name, "response": responses[i]}]
-    )
+person_embeddings = {} 
+for name, answers in attendees.items():
+    # filtering out unanswered
+    valid_answers = [a for a in answers if a.strip() and a.strip().upper() != "NULL"]
+    valid_questions = [q for q, a in zip(questions, answers) if a.strip() and a.strip().upper() != "NULL"]
 
-# saving embeddings in JSON
-embeddings_dict = {names[i]: embeddings[i].tolist() for i in range(len(names))}
-with open(EMBEDDINGS_FILE, "w") as f:
-    json.dump(embeddings_dict, f, indent=4)
+    if not valid_answers: 
+        continue
 
-print(f"Embeddings generated and stored in ChromaDB at {CHROMA_DB_DIR}")
+    # print(f"VALID ANSWERS: {valid_answers}")
+    response = co.embed(texts=valid_answers, model="embed-english-light-v3.0", input_type="search_document")
+    embeddings = response.embeddings  # one embedding per question
+    
+    person_embeddings[name] = {q: emb for q, emb in zip(valid_questions, embeddings)}  # ✅ Store correctly
+
+    # chroma db save
+    for q, emb, ans in zip(valid_questions, embeddings, valid_answers):
+        collection.add(
+            ids=[f"{name}_{q}"],  # ID == name{underscore}question
+            embeddings=[emb],
+            metadatas=[{"name": name, "question": q, "answer": ans}]
+        )
+
+# print(person_embeddings)
+print("EMBEDDINGS STORED!")
